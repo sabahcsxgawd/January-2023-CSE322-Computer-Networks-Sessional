@@ -1,6 +1,7 @@
 package Client;
 
-import java.io.*;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 import java.net.Socket;
 import java.util.Scanner;
 
@@ -13,23 +14,27 @@ public class Client {
             ObjectOutputStream objectOutputStream = new ObjectOutputStream(socket.getOutputStream());
             ObjectInputStream objectInputStream = new ObjectInputStream(socket.getInputStream());
 
-            while (true) {
-                String msg = scanner.nextLine();
-                System.out.println(msg);
-                objectOutputStream.writeUnshared(msg);
-                String in = (String) objectInputStream.readUnshared();
-                if(in.equals("ACK_S")) {
-                    System.out.println("ACKED");
-                    break;
-                }
-            }
+            System.out.print("Enter your username to connect : ");
+            String userName = scanner.nextLine();
 
-            socket.close();
-            objectInputStream.close();
-            objectOutputStream.close();
+            objectOutputStream.writeUnshared(userName);
+
+            String connMsgFromServer = (String) objectInputStream.readUnshared();
+            System.out.println(connMsgFromServer);
+
+            if (connMsgFromServer.equalsIgnoreCase("Client Already Connected")) {
+                socket.close();
+                objectInputStream.close();
+                objectOutputStream.close();
+            } else {
+                while (true) ;
+            }
+//            socket.close();
+//            objectInputStream.close();
+//            objectOutputStream.close();
 
         } catch (Exception e) {
-
+            e.printStackTrace();
         }
     }
 }
