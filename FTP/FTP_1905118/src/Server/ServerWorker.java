@@ -2,12 +2,14 @@ package Server;
 
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 import java.net.Socket;
 
 public class ServerWorker extends Thread {
     private final Socket socket;
-    private DataOutputStream dataOutputStream;
-    private DataInputStream dataInputStream;
+    private ObjectOutputStream objectOutputStream;
+    private ObjectInputStream objectInputStream;
 
     public ServerWorker(Socket socket) {
         this.socket = socket;
@@ -15,28 +17,20 @@ public class ServerWorker extends Thread {
 
     public void run() {
         try {
-            this.dataOutputStream = new DataOutputStream(socket.getOutputStream());
-            this.dataInputStream = new DataInputStream((socket.getInputStream()));
+            this.objectOutputStream = new ObjectOutputStream(socket.getOutputStream());
+            this.objectInputStream = new ObjectInputStream((socket.getInputStream()));
 
             while(true) {
-                String msg = dataInputStream.readUTF();
+                String msg = (String) objectInputStream.readUnshared();
                 if(msg.equals("SYN_C")) {
                     System.out.println("Got SYN from client\n");
-                    dataOutputStream.writeUTF("ACK_S");
+                    objectOutputStream.writeUnshared((String)"ACK_S");
                 }
                 else {
                     System.out.println(msg);
                 }
             }
         } catch (Exception e) {
-            try {
-                this.dataInputStream.close();
-                this.dataOutputStream.close();
-                this.socket.close();
-            } catch (Exception ee) {
-//                ee.printStackTrace();
-            }
-//            e.printStackTrace();
         }
     }
 }
