@@ -25,7 +25,7 @@ public class ServerWorker extends Thread {
             String clientUserName = (String) objectInputStream.readUnshared();
             clientUserName = clientUserName.trim();
             String clientConnStatus = clientStatus.get(clientUserName);
-            String connMsgFromSever = "";
+
             if (clientConnStatus == null || clientConnStatus.equalsIgnoreCase("Offline")) {
                 if (clientConnStatus == null) {
                     new File(clientDirsPath + clientUserName + "/public/").mkdirs();
@@ -34,8 +34,8 @@ public class ServerWorker extends Thread {
                 }
                 clientConnStatus  = "Online";
                 clientStatus.put(clientUserName, clientConnStatus);
-                connMsgFromSever = "Welcome to FTP";
                 objectOutputStream.writeUnshared("Welcome to FTP");
+                while (true);
             } else {
                 objectOutputStream.writeUnshared("Client Already Connected");
                 this.socket.close();
