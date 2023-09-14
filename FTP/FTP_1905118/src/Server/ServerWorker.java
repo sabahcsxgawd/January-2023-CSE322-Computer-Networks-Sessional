@@ -30,7 +30,7 @@ public class ServerWorker extends Thread {
                 if (clientConnStatus == null) {
                     new File(clientDirsPath + clientUserName + "/public/").mkdirs();
                     new File(clientDirsPath + clientUserName + "/private/").mkdirs();
-                    new File(clientDownloadsPath + clientUserName).mkdirs();
+                    new File(clientDownloadsPath + clientUserName + '/').mkdirs();
                 }
                 clientConnStatus  = "Online";
                 clientStatus.put(clientUserName, clientConnStatus);

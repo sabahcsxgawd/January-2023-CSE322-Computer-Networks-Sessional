@@ -16,8 +16,9 @@ public class Server {
         File clientDirFile = new File(clientDirsPath);
 
         for(File child : Objects.requireNonNull(clientDirFile.listFiles())) {
-            System.out.println(child.getAbsolutePath().replaceAll(clientDirsPath, ""));
-            String clientName = child.getAbsolutePath().replaceAll(clientDirsPath, "");
+            String[] clientNamePath = child.getPath().split("[\\\\|\\/]");
+            String clientName = clientNamePath[clientNamePath.length - 1];
+//            System.out.println(clientName);
             clientStatus.put(clientName, "Offline");
         }
 
