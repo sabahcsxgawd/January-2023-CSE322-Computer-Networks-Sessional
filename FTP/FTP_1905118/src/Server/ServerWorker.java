@@ -3,10 +3,9 @@ package Server;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.net.Socket;
-import java.util.Date;
 
 public class ServerWorker extends Thread {
-    private Socket socket;
+    private final Socket socket;
     private DataOutputStream dataOutputStream;
     private DataInputStream dataInputStream;
 
@@ -20,9 +19,13 @@ public class ServerWorker extends Thread {
             this.dataInputStream = new DataInputStream((socket.getInputStream()));
 
             while(true) {
-                if(dataInputStream.readUTF().equals("SYN_C")) {
+                String msg = dataInputStream.readUTF();
+                if(msg.equals("SYN_C")) {
                     System.out.println("Got SYN from client\n");
                     dataOutputStream.writeUTF("ACK_S");
+                }
+                else {
+                    System.out.println(msg);
                 }
             }
         } catch (Exception e) {
