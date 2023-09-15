@@ -1,5 +1,6 @@
 package Client;
 
+import java.io.FileOutputStream;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.Socket;
@@ -68,12 +69,21 @@ public class Client {
                             String fileChoice = scanner.nextLine();
                             oos.writeUnshared(fileChoice);
                             String serverMsg2 = (String) ois.readUnshared();
-                            System.out.println(serverMsg2);
                             if(serverMsg2.contains("Bad Choice")) {
+                                System.out.println(serverMsg2);
                                 continue;
                             }
                             else {
-                                //actual file receive gets started
+                                System.out.println("Downloading File " + serverMsg2);
+                                // actual file receive gets started
+                                int receivedBytes = 0;
+                                FileOutputStream fos = new FileOutputStream("./src/Client/Downloads/" + userName + "/" + serverMsg2);
+                                byte[] buffer = new byte[8192];
+                                while((receivedBytes = ois.read(buffer)) != -1) {
+                                    fos.write(buffer, 0, receivedBytes);
+                                }
+                                fos.close();
+                                System.out.println((String) ois.readUnshared());
                             }
                         }
                     }

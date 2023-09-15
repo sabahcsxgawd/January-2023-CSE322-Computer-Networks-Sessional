@@ -1,6 +1,7 @@
 package Server;
 
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.Socket;
@@ -8,6 +9,11 @@ import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
 public class ServerWorker extends Thread {
+
+    private static int MIN_CHUNK_SIZE = 4096; // 4KB
+    private static int MAX_CHUNK_SIZE = 8192; // 8KB
+    private static long MAX_BUFFER_SIZE = 67108864l; // 64MB
+
     private static ConcurrentHashMap<String, String> clientStatus;
     private static ConcurrentHashMap<String, ArrayList<String>> unreadMessages;
     private static String clientDirsPath = "./src/Server/ClientDirs/";
@@ -207,9 +213,11 @@ public class ServerWorker extends Thread {
             ArrayList<String> displayFiles = new ArrayList<>();
             if(clientChoice.equalsIgnoreCase("0")) {
                 displayFiles = this.getFileInfo(clientName, 0);
+                clientChoice = "/private/";
                 oos.writeUnshared("Here are your private files for download :");
             }
             else if(clientChoice.equalsIgnoreCase("1")) {
+                clientChoice = "/public/";
                 displayFiles = this.getFileInfo(clientName, 1);
                 oos.writeUnshared("Here are your public files for download :");
             }
@@ -226,8 +234,17 @@ public class ServerWorker extends Thread {
                 clientFileChoice = clientFileChoice.trim();
                 int iFileChoice = Integer.parseInt(clientFileChoice);
                 if(0 <= iFileChoice && iFileChoice < displayFiles.size()) {
-                    oos.writeUnshared("Downloading File " + displayFiles.get(iFileChoice));
+                    oos.writeUnshared(displayFiles.get(iFileChoice));
                     // actual file send gets started
+                    int sentBytes = 0;
+                    FileInputStream fis = new FileInputStream(new File(clientDirsPath + clientName + clientChoice + displayFiles.get(iFileChoice)));
+                    byte[] buffer = new byte[MAX_CHUNK_SIZE];
+                    while((sentBytes = fis.read(buffer)) != -1) {
+                        oos.write(buffer, 0, sentBytes);
+                        oos.flush();
+                    }
+                    fis.close();
+                    oos.writeUnshared("Download Successful");
                 } else {
                     oos.writeUnshared("Bad Choice");
                 }
