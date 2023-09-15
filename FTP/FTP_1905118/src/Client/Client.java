@@ -27,7 +27,34 @@ public class Client {
                 ois.close();
                 oos.close();
             } else {
-                while (true) ;
+                while (true) {
+                    System.out.println((String) ois.readUnshared());
+                    String choice = scanner.nextLine();
+                    oos.writeUnshared(choice);
+                    int response = (int) ois.readUnshared();
+                    if(response == -1) {
+                        System.out.println(ois.readUnshared());
+                    }
+                    else if(response == 0) {
+                        System.out.println(ois.readUnshared());
+                        socket.close();
+                        ois.close();
+                        oos.close();
+                        break;
+                    }
+                    else if(response == 1) {
+                        System.out.println(ois.readUnshared());
+                    }
+                    else if(response == 2) {
+                        System.out.println(ois.readUnshared());
+                    }
+                    else if(response == 3) {
+                        System.out.println(ois.readUnshared());
+                    }
+                    else if(response == 4) {
+
+                    }
+                }
             }
 //            socket.close();
 //            ois.close();

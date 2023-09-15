@@ -4,10 +4,7 @@ import java.io.File;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.Socket;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Objects;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
 public class ServerWorker extends Thread {
@@ -54,11 +51,13 @@ public class ServerWorker extends Thread {
                     sendOptionsMenu(oos);
                     // get optionsMenuChoice
                     int optionsMenuChoice = getOptionsMenuChoice(ois);
+                    oos.writeUnshared(optionsMenuChoice);
                     // do choiceWiseWork
                     if(optionsMenuChoice == -1) {
                         oos.writeUnshared("Bad Choice. Please choose correctly");
                     }
                     else if(optionsMenuChoice == 0) {
+                        clientStatus.put(clientName, "Offline");
                         this.logOut(ois, oos, this.socket);
                     }
                     else if(optionsMenuChoice == 1) {
@@ -117,8 +116,12 @@ public class ServerWorker extends Thread {
     }
     
     private void sendAllClientStatus(ObjectOutputStream oos) {
+        String allClientStatus = "Client Name\t\t\tClient Active Status\n";
+        for(Map.Entry<String, String> elem : clientStatus.entrySet()) {
+            allClientStatus += elem.getKey() + "\t\t\t" + elem.getValue() + '\n';
+        }
         try {
-            oos.writeUnshared(clientStatus);
+            oos.writeUnshared(allClientStatus);
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -137,7 +140,7 @@ public class ServerWorker extends Thread {
         File[] fileArr = new File(fileDir).listFiles();
 
         for(File child : Objects.requireNonNull(fileArr)) {
-            String[] filePathArr = child.getPath().split("[\\|/]");
+            String[] filePathArr = child.getPath().split("[\\\\|\\/]");
             String file = filePathArr[fileArr.length - 1];
             files.add(file);
         }
@@ -186,6 +189,7 @@ public class ServerWorker extends Thread {
 
     private void logOut(ObjectInputStream ois, ObjectOutputStream oos, Socket socket) {
         try {
+            oos.writeUnshared("GoodBye, See you again");
             socket.close();
             ois.close();
             oos.close();
