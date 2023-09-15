@@ -20,6 +20,8 @@ public class ServerWorker extends Thread {
             "View own private and public files",
             "View others public files",
             "View all unread messages",
+            "Download own file",
+            "Download others public file",
             // TODO file download, upload, request 
     };
 
@@ -129,7 +131,7 @@ public class ServerWorker extends Thread {
     private void sendAllClientStatus(ObjectOutputStream oos) {
         String allClientStatus = "Client Name\t\t\tClient Active Status\n";
         for(Map.Entry<String, String> elem : clientStatus.entrySet()) {
-            allClientStatus += elem.getKey() + "\t\t\t" + elem.getValue() + '\n';
+            allClientStatus += elem.getKey() + "\t\t\t\t" + elem.getValue() + '\n';
         }
         try {
             oos.writeUnshared(allClientStatus);
@@ -151,8 +153,8 @@ public class ServerWorker extends Thread {
         File[] fileArr = new File(fileDir).listFiles();
 
         for(File child : Objects.requireNonNull(fileArr)) {
-            String[] filePathArr = child.getPath().split("[\\\\|\\/]");
-            String file = filePathArr[fileArr.length - 1];
+            String[] filePathArr = child.getPath().split("\\\\|/");
+            String file = filePathArr[filePathArr.length - 1];
             files.add(file);
         }
         return files;
