@@ -65,6 +65,16 @@ public class Client {
                         }
                         else {
                             System.out.println((String) ois.readUnshared());
+                            String fileChoice = scanner.nextLine();
+                            oos.writeUnshared(fileChoice);
+                            String serverMsg2 = (String) ois.readUnshared();
+                            System.out.println(serverMsg2);
+                            if(serverMsg2.contains("Bad Choice")) {
+                                continue;
+                            }
+                            else {
+                                //actual file receive gets started
+                            }
                         }
                     }
                 }

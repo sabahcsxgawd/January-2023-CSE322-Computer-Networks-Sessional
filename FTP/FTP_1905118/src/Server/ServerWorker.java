@@ -222,6 +222,15 @@ public class ServerWorker extends Thread {
                     downloadableFilesInfo += "Type " + i + " to download file " + displayFiles.get(i) + '\n';
                 }
                 oos.writeUnshared(downloadableFilesInfo);
+                String clientFileChoice = (String) ois.readUnshared();
+                clientFileChoice = clientFileChoice.trim();
+                int iFileChoice = Integer.parseInt(clientFileChoice);
+                if(0 <= iFileChoice && iFileChoice < displayFiles.size()) {
+                    oos.writeUnshared("Downloading File " + displayFiles.get(iFileChoice));
+                    // actual file send gets started
+                } else {
+                    oos.writeUnshared("Bad Choice");
+                }
             }
         } catch (Exception e) {
             e.printStackTrace();
