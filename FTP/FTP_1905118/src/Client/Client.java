@@ -54,6 +54,19 @@ public class Client {
                     else if(response == 4) {
                         System.out.println(ois.readUnshared());
                     }
+                    else if(response == 5) {
+                        System.out.println(ois.readUnshared());
+                        String myAccessTypeChoice = scanner.nextLine();
+                        oos.writeUnshared(myAccessTypeChoice);
+                        String serverMsg1 = (String) ois.readUnshared();
+                        System.out.println(serverMsg1);
+                        if(serverMsg1.contains("Bad choice")) {
+                            continue;
+                        }
+                        else {
+                            System.out.println((String) ois.readUnshared());
+                        }
+                    }
                 }
             }
 

@@ -46,47 +46,46 @@ public class ServerWorker extends Thread {
                     new File(clientDirsPath + clientName + "/private/").mkdirs();
                     new File(clientDownloadsPath + clientName + '/').mkdirs();
                 }
-                clientConnStatus  = "Online";
+                clientConnStatus = "Online";
                 clientStatus.put(clientName, clientConnStatus);
-                if(unreadMessages.get(clientName) == null) {
+                if (unreadMessages.get(clientName) == null) {
                     unreadMessages.put(clientName, new ArrayList<>());
                 }
                 oos.writeUnshared("Welcome to FTP");
-                
+
                 while (true) {
                     // send optionsMenu
                     sendOptionsMenu(oos);
+
                     // get optionsMenuChoice
                     int optionsMenuChoice = getOptionsMenuChoice(ois);
                     oos.writeUnshared(optionsMenuChoice);
+
                     // do choiceWiseWork
-                    if(optionsMenuChoice == -1) {
+                    if (optionsMenuChoice == -1) {
                         oos.writeUnshared("Bad Choice. Please choose correctly");
-                    }
-                    else if(optionsMenuChoice == 0) {
+                    } else if (optionsMenuChoice == 0) {
                         clientStatus.put(clientName, "Offline");
                         this.logOut(ois, oos, this.socket);
                         break;
-                    }
-                    else if(optionsMenuChoice == 1) {
+                    } else if (optionsMenuChoice == 1) {
                         this.sendAllClientStatus(oos);
-                    }
-                    else if(optionsMenuChoice == 2) {
+                    } else if (optionsMenuChoice == 2) {
                         this.sendOwnFileInfo(oos, clientName);
-                    }
-                    else if(optionsMenuChoice == 3) {
+                    } else if (optionsMenuChoice == 3) {
                         this.sendOtherPublicFileInfo(oos, clientName);
-                    }
-                    else if(optionsMenuChoice == 4) {
+                    } else if (optionsMenuChoice == 4) {
                         String unreadMsg = "Here are all of your unread messages : \n";
-                        for(String msg : unreadMessages.get(clientName)) {
+                        for (String msg : unreadMessages.get(clientName)) {
                             unreadMsg += msg + "\n\n";
                         }
                         unreadMessages.put(clientName, new ArrayList<>());
                         oos.writeUnshared(unreadMsg);
+                    } else if (optionsMenuChoice == 5) {
+                        this.ownFileDownload(clientName, oos, ois);
                     }
                 }
-                
+
             } else {
                 oos.writeUnshared("Client Already Connected");
                 this.socket.close();
@@ -101,11 +100,11 @@ public class ServerWorker extends Thread {
 
     private void sendOptionsMenu(ObjectOutputStream oos) {
         String optionsMenuStr = "";
-        for(int i = 0; i < optionsMenu.length; i++) {
+        for (int i = 0; i < optionsMenu.length; i++) {
             optionsMenuStr += "Type " + i + " to " + optionsMenu[i] + '\n';
         }
         try {
-            oos.writeUnshared(optionsMenuStr);   
+            oos.writeUnshared(optionsMenuStr);
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -115,22 +114,20 @@ public class ServerWorker extends Thread {
         try {
             String choice = (String) ois.readUnshared();
             int choice_i = Integer.parseInt(choice);
-            if(0 <= choice_i && choice_i < optionsMenu.length) {
+            if (0 <= choice_i && choice_i < optionsMenu.length) {
                 return choice_i;
-            }
-            else {
+            } else {
                 return -1;
             }
-        }
-        catch (Exception e) {
+        } catch (Exception e) {
             return -1;
         }
-        
+
     }
-    
+
     private void sendAllClientStatus(ObjectOutputStream oos) {
         String allClientStatus = "Client Name\t\t\tClient Active Status\n";
-        for(Map.Entry<String, String> elem : clientStatus.entrySet()) {
+        for (Map.Entry<String, String> elem : clientStatus.entrySet()) {
             allClientStatus += elem.getKey() + "\t\t\t\t" + elem.getValue() + '\n';
         }
         try {
@@ -143,16 +140,15 @@ public class ServerWorker extends Thread {
     private ArrayList<String> getFileInfo(String clientName, int accessType) {
         String access = "";
         ArrayList<String> files = new ArrayList<>();
-        if(accessType == 0) {
+        if (accessType == 0) {
             access = "/private/";
-        }
-        else if(accessType == 1) {
+        } else if (accessType == 1) {
             access = "/public/";
         }
         String fileDir = clientDirsPath + clientName + access;
         File[] fileArr = new File(fileDir).listFiles();
 
-        for(File child : Objects.requireNonNull(fileArr)) {
+        for (File child : Objects.requireNonNull(fileArr)) {
             String[] filePathArr = child.getPath().split("\\\\|/");
             String file = filePathArr[filePathArr.length - 1];
             files.add(file);
@@ -165,12 +161,12 @@ public class ServerWorker extends Thread {
 
         // private
         ownFileInfo += "My private files : \n";
-        for(String file : getFileInfo(clientName, 0)) {
+        for (String file : getFileInfo(clientName, 0)) {
             ownFileInfo += file + '\n';
         }
 
         ownFileInfo += "My public files : \n";
-        for(String file : getFileInfo(clientName, 1)) {
+        for (String file : getFileInfo(clientName, 1)) {
             ownFileInfo += file + '\n';
         }
 
@@ -183,11 +179,11 @@ public class ServerWorker extends Thread {
 
     private void sendOtherPublicFileInfo(ObjectOutputStream oos, String clientName) {
         String othersFileInfo = "";
-        for(String otherClient : Collections.list(clientStatus.keys())) {
-            if(!otherClient.equalsIgnoreCase(clientName)) {
+        for (String otherClient : Collections.list(clientStatus.keys())) {
+            if (!otherClient.equalsIgnoreCase(clientName)) {
                 othersFileInfo += "Public Files of Client " + otherClient + " :\n";
                 ArrayList<String> othersFiles = getFileInfo(otherClient, 1);
-                for(String otherFile : othersFiles) {
+                for (String otherFile : othersFiles) {
                     othersFileInfo += otherFile + '\n';
                 }
             }
@@ -200,6 +196,39 @@ public class ServerWorker extends Thread {
         }
     }
 
+    private void ownFileDownload(String clientName, ObjectOutputStream oos, ObjectInputStream ois) {
+        String accessTypeChoice =
+                "Type 0 to download own private file\n" +
+                "Type 1 to download own public file";
+        try {
+            oos.writeUnshared(accessTypeChoice);
+            String clientChoice = (String) ois.readUnshared();
+            clientChoice = clientChoice.trim();
+            ArrayList<String> displayFiles = new ArrayList<>();
+            if(clientChoice.equalsIgnoreCase("0")) {
+                displayFiles = this.getFileInfo(clientName, 0);
+                oos.writeUnshared("Here are your private files for download :");
+            }
+            else if(clientChoice.equalsIgnoreCase("1")) {
+                displayFiles = this.getFileInfo(clientName, 1);
+                oos.writeUnshared("Here are your public files for download :");
+            }
+            else {
+                oos.writeUnshared("Bad choice. Please choose correctly");
+            }
+            if(!displayFiles.isEmpty()) {
+                String downloadableFilesInfo = "";
+                for(int i = 0; i < displayFiles.size(); i++) {
+                    downloadableFilesInfo += "Type " + i + " to download file " + displayFiles.get(i) + '\n';
+                }
+                oos.writeUnshared(downloadableFilesInfo);
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+    }
+
     private void logOut(ObjectInputStream ois, ObjectOutputStream oos, Socket socket) {
         try {
             oos.writeUnshared("GoodBye, See you again");
@@ -209,5 +238,5 @@ public class ServerWorker extends Thread {
         } catch (Exception e) {
             e.printStackTrace();
         }
-    } 
+    }
 }
