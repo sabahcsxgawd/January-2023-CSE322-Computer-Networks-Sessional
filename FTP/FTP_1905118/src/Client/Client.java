@@ -11,27 +11,27 @@ public class Client {
     public static void main(String[] args) {
         try (Socket socket = new Socket("localhost", 6666)) {
 
-            ObjectOutputStream objectOutputStream = new ObjectOutputStream(socket.getOutputStream());
-            ObjectInputStream objectInputStream = new ObjectInputStream(socket.getInputStream());
+            ObjectOutputStream oos = new ObjectOutputStream(socket.getOutputStream());
+            ObjectInputStream ois = new ObjectInputStream(socket.getInputStream());
 
             System.out.print("Enter your username to connect : ");
             String userName = scanner.nextLine();
 
-            objectOutputStream.writeUnshared(userName);
+            oos.writeUnshared(userName);
 
-            String connMsgFromServer = (String) objectInputStream.readUnshared();
+            String connMsgFromServer = (String) ois.readUnshared();
             System.out.println(connMsgFromServer);
 
             if (connMsgFromServer.equalsIgnoreCase("Client Already Connected")) {
                 socket.close();
-                objectInputStream.close();
-                objectOutputStream.close();
+                ois.close();
+                oos.close();
             } else {
                 while (true) ;
             }
 //            socket.close();
-//            objectInputStream.close();
-//            objectOutputStream.close();
+//            ois.close();
+//            oos.close();
 
         } catch (Exception e) {
             e.printStackTrace();
