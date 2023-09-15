@@ -52,13 +52,10 @@ public class Client {
                         System.out.println(ois.readUnshared());
                     }
                     else if(response == 4) {
-
+                        System.out.println(ois.readUnshared());
                     }
                 }
             }
-//            socket.close();
-//            ois.close();
-//            oos.close();
 
         } catch (Exception e) {
             e.printStackTrace();

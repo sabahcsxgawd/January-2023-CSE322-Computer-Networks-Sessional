@@ -9,6 +9,7 @@ import java.util.concurrent.ConcurrentHashMap;
 
 public class ServerWorker extends Thread {
     private static ConcurrentHashMap<String, String> clientStatus;
+    private static ConcurrentHashMap<String, ArrayList<String>> unreadMessages;
     private static String clientDirsPath = "./src/Server/ClientDirs/";
     private static String clientDownloadsPath = "./src/Client/Downloads/";
     private final Socket socket;
@@ -22,9 +23,10 @@ public class ServerWorker extends Thread {
             // TODO file download, upload, request 
     };
 
-    public ServerWorker(Socket socket, ConcurrentHashMap<String, String> clientStatusFromServer) {
+    public ServerWorker(Socket socket, ConcurrentHashMap<String, String> clientStatusFromServer, ConcurrentHashMap<String, ArrayList<String>> unreadMessagesFromServer) {
         this.socket = socket;
         clientStatus = clientStatusFromServer;
+        unreadMessages = unreadMessagesFromServer;
     }
 
     public void run() {
@@ -59,6 +61,7 @@ public class ServerWorker extends Thread {
                     else if(optionsMenuChoice == 0) {
                         clientStatus.put(clientName, "Offline");
                         this.logOut(ois, oos, this.socket);
+                        break;
                     }
                     else if(optionsMenuChoice == 1) {
                         this.sendAllClientStatus(oos);
@@ -70,7 +73,12 @@ public class ServerWorker extends Thread {
                         this.sendOtherPublicFileInfo(oos, clientName);
                     }
                     else if(optionsMenuChoice == 4) {
-                        // TODO view unread msgs
+                        String unreadMsg = "Here are all of your unread messages : \n";
+                        for(String msg : unreadMessages.get(clientName)) {
+                            unreadMsg += msg + "\n\n";
+                        }
+                        unreadMessages.put(clientName, new ArrayList<>());
+                        oos.writeUnshared(unreadMsg);
                     }
                 }
                 

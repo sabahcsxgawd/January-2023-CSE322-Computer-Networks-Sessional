@@ -10,8 +10,10 @@ import java.util.concurrent.ConcurrentHashMap;
 public class Server {
 
     private static ConcurrentHashMap<String, String> clientStatus;
+    private static ConcurrentHashMap<String, ArrayList<String>> unreadMessages;
     public static void main(String[] args) {
         clientStatus = new ConcurrentHashMap<>();
+        unreadMessages = new ConcurrentHashMap<>();
         String clientDirsPath = "./src/Server/ClientDirs/";
         File clientDirFile = new File(clientDirsPath);
 
@@ -20,6 +22,7 @@ public class Server {
             String clientName = clientNamePath[clientNamePath.length - 1];
             System.out.println(clientName);
             clientStatus.put(clientName, "Offline");
+            unreadMessages.put(clientName, new ArrayList<>());
         }
 
         while(true) {
@@ -28,7 +31,7 @@ public class Server {
                 Socket clientSocket = serverSocket.accept();
                 System.out.println(clientSocket + " connected");
 
-                ServerWorker serverWorker = new ServerWorker(clientSocket, clientStatus);
+                ServerWorker serverWorker = new ServerWorker(clientSocket, clientStatus, unreadMessages);
                 serverWorker.start();
 
             } catch (Exception e) {
