@@ -46,6 +46,9 @@ public class ServerWorker extends Thread {
                 }
                 clientConnStatus  = "Online";
                 clientStatus.put(clientName, clientConnStatus);
+                if(unreadMessages.get(clientName) == null) {
+                    unreadMessages.put(clientName, new ArrayList<>());
+                }
                 oos.writeUnshared("Welcome to FTP");
                 
                 while (true) {
