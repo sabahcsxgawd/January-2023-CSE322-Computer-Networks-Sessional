@@ -35,7 +35,7 @@ public class Server {
                 serverWorker.start();
 
             } catch (Exception e) {
-//                e.printStackTrace();
+                e.printStackTrace();
             }
         }
     }

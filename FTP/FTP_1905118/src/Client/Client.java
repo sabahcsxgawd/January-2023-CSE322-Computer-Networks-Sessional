@@ -1,5 +1,7 @@
 package Client;
 
+import FileRequest.FileRequest;
+
 import java.io.FileOutputStream;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
@@ -110,6 +112,11 @@ public class Client {
                             fos.close();
                             System.out.println((String) ois.readUnshared());
                         }
+                    }
+                    else if(response == 7) {
+                        System.out.println("Please provide a short description for the requested file :");
+                        String requestedFileDescription = scanner.nextLine();
+                        oos.writeUnshared(new FileRequest(requestedFileDescription, userName));
                     }
                 }
             }

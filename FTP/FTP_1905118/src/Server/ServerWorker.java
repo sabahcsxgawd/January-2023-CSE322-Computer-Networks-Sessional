@@ -1,5 +1,7 @@
 package Server;
 
+import FileRequest.FileRequest;
+
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.ObjectInputStream;
@@ -10,14 +12,14 @@ import java.util.concurrent.ConcurrentHashMap;
 
 public class ServerWorker extends Thread {
 
-    private static int MIN_CHUNK_SIZE = 4096; // 4KB
-    private static int MAX_CHUNK_SIZE = 8192; // 8KB
-    private static long MAX_BUFFER_SIZE = 67108864l; // 64MB
+    private static final int MIN_CHUNK_SIZE = 4096; // 4KB
+    private static final int MAX_CHUNK_SIZE = 8192; // 8KB
+    private static final long MAX_BUFFER_SIZE = 67108864; // 64MB
 
     private static ConcurrentHashMap<String, String> clientStatus;
     private static ConcurrentHashMap<String, ArrayList<String>> unreadMessages;
-    private static String clientDirsPath = "./src/Server/ClientDirs/";
-    private static String clientDownloadsPath = "./src/Client/Downloads/";
+    private static final String clientDirsPath = "./src/Server/ClientDirs/";
+    private static final String clientDownloadsPath = "./src/Client/Downloads/";
     private final Socket socket;
 
     private static final String[] optionsMenu = {
@@ -28,7 +30,8 @@ public class ServerWorker extends Thread {
             "View all unread messages",
             "Download own file",
             "Download others public file",
-            // TODO file download, upload, request 
+            "Make a file request",
+            // TODO file upload, request
     };
 
     public ServerWorker(Socket socket, ConcurrentHashMap<String, String> clientStatusFromServer, ConcurrentHashMap<String, ArrayList<String>> unreadMessagesFromServer) {
@@ -89,9 +92,11 @@ public class ServerWorker extends Thread {
                         oos.writeUnshared(unreadMsg);
                     } else if (optionsMenuChoice == 5) {
                         this.ownFileDownload(clientName, oos, ois);
-                    }
-                    else if(optionsMenuChoice == 6) {
+                    } else if (optionsMenuChoice == 6) {
                         this.othersFileDownload(clientName, oos, ois);
+                    }
+                    else if(optionsMenuChoice == 7) {
+                        this.broadcastFileRequest();
                     }
                 }
 
@@ -105,6 +110,10 @@ public class ServerWorker extends Thread {
         } catch (Exception e) {
             e.printStackTrace();
         }
+    }
+
+    private void broadcastFileRequest() {
+
     }
 
     private void sendOptionsMenu(ObjectOutputStream oos) {
@@ -207,43 +216,40 @@ public class ServerWorker extends Thread {
 
     private void ownFileDownload(String clientName, ObjectOutputStream oos, ObjectInputStream ois) {
         String accessTypeChoice =
-                "Type 0 to download own private file\n" +
-                "Type 1 to download own public file";
+                "Type 0 to download own private file\n" + "Type 1 to download own public file";
         try {
             oos.writeUnshared(accessTypeChoice);
             String clientChoice = (String) ois.readUnshared();
             clientChoice = clientChoice.trim();
             ArrayList<String> displayFiles = new ArrayList<>();
-            if(clientChoice.equalsIgnoreCase("0")) {
+            if (clientChoice.equalsIgnoreCase("0")) {
                 displayFiles = this.getFileInfo(clientName, 0);
                 clientChoice = "/private/";
                 oos.writeUnshared("Here are your private files for download :");
-            }
-            else if(clientChoice.equalsIgnoreCase("1")) {
+            } else if (clientChoice.equalsIgnoreCase("1")) {
                 clientChoice = "/public/";
                 displayFiles = this.getFileInfo(clientName, 1);
                 oos.writeUnshared("Here are your public files for download :");
-            }
-            else {
+            } else {
                 oos.writeUnshared("Bad Choice. Please choose correctly");
             }
-            if(!displayFiles.isEmpty()) {
+            if (!displayFiles.isEmpty()) {
                 String downloadableFilesInfo = "";
-                for(int i = 0; i < displayFiles.size(); i++) {
+                for (int i = 0; i < displayFiles.size(); i++) {
                     downloadableFilesInfo += "Type " + i + " to download file " + displayFiles.get(i) + '\n';
                 }
                 oos.writeUnshared(downloadableFilesInfo);
                 String clientFileChoice = (String) ois.readUnshared();
                 clientFileChoice = clientFileChoice.trim();
                 int iFileChoice = Integer.parseInt(clientFileChoice);
-                if(0 <= iFileChoice && iFileChoice < displayFiles.size()) {
+                if (0 <= iFileChoice && iFileChoice < displayFiles.size()) {
                     oos.writeUnshared(displayFiles.get(iFileChoice));
 
                     // actual file sending gets started
                     FileInputStream fis = new FileInputStream(new File(clientDirsPath + clientName + clientChoice + displayFiles.get(iFileChoice)));
                     int sentBytes = 0;
                     byte[] buffer = new byte[MAX_CHUNK_SIZE];
-                    while((sentBytes = fis.read(buffer)) != -1) {
+                    while ((sentBytes = fis.read(buffer)) != -1) {
                         oos.write(buffer, 0, sentBytes);
                         oos.flush();
                     }
@@ -275,10 +281,10 @@ public class ServerWorker extends Thread {
         String downloadChoice = "";
         int index = 0;
 
-        for(String otherClient : Collections.list(clientStatus.keys())) {
-            if(!otherClient.equalsIgnoreCase(clientName)) {
+        for (String otherClient : Collections.list(clientStatus.keys())) {
+            if (!otherClient.equalsIgnoreCase(clientName)) {
                 ArrayList<String> otherClientFiles = this.getFileInfo(otherClient, 1);
-                for(String otherFile : otherClientFiles) {
+                for (String otherFile : otherClientFiles) {
                     downloadChoice += "Type " + index++ + " to download file " + otherFile + " [Owner : " + otherClient + "]\n";
                     pairArrayList.add(new Pair(otherClient, otherFile));
                 }
@@ -290,21 +296,20 @@ public class ServerWorker extends Thread {
             String fileChoice = (String) ois.readUnshared();
             fileChoice = fileChoice.trim();
             int iFileChoice = Integer.parseInt(fileChoice);
-            if(0 <= iFileChoice && iFileChoice < index) {
+            if (0 <= iFileChoice && iFileChoice < index) {
                 oos.writeUnshared(pairArrayList.get(iFileChoice).fileName);
 
                 // actual file sending gets started
-                FileInputStream fis = new FileInputStream(new File(clientDirsPath + pairArrayList.get(iFileChoice).ownerName + "/public/" + pairArrayList.get(iFileChoice).fileName));
+                FileInputStream fis = new FileInputStream(clientDirsPath + pairArrayList.get(iFileChoice).ownerName + "/public/" + pairArrayList.get(iFileChoice).fileName);
                 int sentBytes = 0;
                 byte[] buffer = new byte[MAX_CHUNK_SIZE];
-                while((sentBytes = fis.read(buffer)) != -1) {
+                while ((sentBytes = fis.read(buffer)) != -1) {
                     oos.write(buffer, 0, sentBytes);
                     oos.flush();
                 }
                 fis.close();
                 oos.writeUnshared("Download Successful");
-            }
-            else {
+            } else {
                 oos.writeUnshared("Bad Choice. Please choose correctly");
             }
         } catch (Exception e) {
@@ -312,6 +317,7 @@ public class ServerWorker extends Thread {
         }
 
     }
+
     private void logOut(ObjectInputStream ois, ObjectOutputStream oos, Socket socket) {
         try {
             oos.writeUnshared("GoodBye, See you again");
