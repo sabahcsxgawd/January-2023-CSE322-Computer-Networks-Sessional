@@ -61,7 +61,7 @@ public class Client {
                         oos.writeUnshared(myAccessTypeChoice);
                         String serverMsg1 = (String) ois.readUnshared();
                         System.out.println(serverMsg1);
-                        if(serverMsg1.contains("Bad choice")) {
+                        if(serverMsg1.contains("Bad Choice")) {
                             continue;
                         }
                         else {
@@ -75,7 +75,8 @@ public class Client {
                             }
                             else {
                                 System.out.println("Downloading File " + serverMsg2);
-                                // actual file receive gets started
+
+                                // actual file receiving gets started
                                 int receivedBytes = 0;
                                 FileOutputStream fos = new FileOutputStream("./src/Client/Downloads/" + userName + "/" + serverMsg2);
                                 byte[] buffer = new byte[8192];
@@ -85,6 +86,29 @@ public class Client {
                                 fos.close();
                                 System.out.println((String) ois.readUnshared());
                             }
+                        }
+                    }
+                    else if(response == 6) {
+                        System.out.println((String) ois.readUnshared());
+                        String clientFileChoice = scanner.nextLine();
+                        oos.writeUnshared(clientFileChoice);
+                        String serverMsg1 = (String) ois.readUnshared();
+                        if(serverMsg1.contains("Bad Choice")) {
+                            System.out.println(serverMsg1);
+                            continue;
+                        }
+                        else {
+                            System.out.println("Downloading file " + serverMsg1);
+
+                            // actual file receiving gets started
+                            int receivedBytes = 0;
+                            FileOutputStream fos = new FileOutputStream("./src/Client/Downloads/" + userName + "/" + serverMsg1);
+                            byte[] buffer = new byte[8192];
+                            while((receivedBytes = ois.read(buffer)) != -1) {
+                                fos.write(buffer, 0, receivedBytes);
+                            }
+                            fos.close();
+                            System.out.println((String) ois.readUnshared());
                         }
                     }
                 }

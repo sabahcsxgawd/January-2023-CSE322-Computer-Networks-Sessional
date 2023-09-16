@@ -90,6 +90,9 @@ public class ServerWorker extends Thread {
                     } else if (optionsMenuChoice == 5) {
                         this.ownFileDownload(clientName, oos, ois);
                     }
+                    else if(optionsMenuChoice == 6) {
+                        this.othersFileDownload(clientName, oos, ois);
+                    }
                 }
 
             } else {
@@ -222,7 +225,7 @@ public class ServerWorker extends Thread {
                 oos.writeUnshared("Here are your public files for download :");
             }
             else {
-                oos.writeUnshared("Bad choice. Please choose correctly");
+                oos.writeUnshared("Bad Choice. Please choose correctly");
             }
             if(!displayFiles.isEmpty()) {
                 String downloadableFilesInfo = "";
@@ -235,9 +238,10 @@ public class ServerWorker extends Thread {
                 int iFileChoice = Integer.parseInt(clientFileChoice);
                 if(0 <= iFileChoice && iFileChoice < displayFiles.size()) {
                     oos.writeUnshared(displayFiles.get(iFileChoice));
-                    // actual file send gets started
-                    int sentBytes = 0;
+
+                    // actual file sending gets started
                     FileInputStream fis = new FileInputStream(new File(clientDirsPath + clientName + clientChoice + displayFiles.get(iFileChoice)));
+                    int sentBytes = 0;
                     byte[] buffer = new byte[MAX_CHUNK_SIZE];
                     while((sentBytes = fis.read(buffer)) != -1) {
                         oos.write(buffer, 0, sentBytes);
@@ -245,6 +249,7 @@ public class ServerWorker extends Thread {
                     }
                     fis.close();
                     oos.writeUnshared("Download Successful");
+
                 } else {
                     oos.writeUnshared("Bad Choice");
                 }
@@ -255,6 +260,58 @@ public class ServerWorker extends Thread {
 
     }
 
+    private void othersFileDownload(String clientName, ObjectOutputStream oos, ObjectInputStream ois) {
+        class Pair {
+            String ownerName;
+            String fileName;
+
+            Pair(String ownerName, String fileName) {
+                this.ownerName = ownerName;
+                this.fileName = fileName;
+            }
+        }
+
+        ArrayList<Pair> pairArrayList = new ArrayList<>();
+        String downloadChoice = "";
+        int index = 0;
+
+        for(String otherClient : Collections.list(clientStatus.keys())) {
+            if(!otherClient.equalsIgnoreCase(clientName)) {
+                ArrayList<String> otherClientFiles = this.getFileInfo(otherClient, 1);
+                for(String otherFile : otherClientFiles) {
+                    downloadChoice += "Type " + index++ + " to download file " + otherFile + " [Owner : " + otherClient + "]\n";
+                    pairArrayList.add(new Pair(otherClient, otherFile));
+                }
+            }
+        }
+
+        try {
+            oos.writeUnshared(downloadChoice);
+            String fileChoice = (String) ois.readUnshared();
+            fileChoice = fileChoice.trim();
+            int iFileChoice = Integer.parseInt(fileChoice);
+            if(0 <= iFileChoice && iFileChoice < index) {
+                oos.writeUnshared(pairArrayList.get(iFileChoice).fileName);
+
+                // actual file sending gets started
+                FileInputStream fis = new FileInputStream(new File(clientDirsPath + pairArrayList.get(iFileChoice).ownerName + "/public/" + pairArrayList.get(iFileChoice).fileName));
+                int sentBytes = 0;
+                byte[] buffer = new byte[MAX_CHUNK_SIZE];
+                while((sentBytes = fis.read(buffer)) != -1) {
+                    oos.write(buffer, 0, sentBytes);
+                    oos.flush();
+                }
+                fis.close();
+                oos.writeUnshared("Download Successful");
+            }
+            else {
+                oos.writeUnshared("Bad Choice. Please choose correctly");
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+    }
     private void logOut(ObjectInputStream ois, ObjectOutputStream oos, Socket socket) {
         try {
             oos.writeUnshared("GoodBye, See you again");
