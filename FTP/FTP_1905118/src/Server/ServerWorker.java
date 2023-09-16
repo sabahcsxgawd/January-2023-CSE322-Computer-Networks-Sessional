@@ -14,10 +14,14 @@ public class ServerWorker extends Thread {
 
     private static final int MIN_CHUNK_SIZE = 4096; // 4KB
     private static final int MAX_CHUNK_SIZE = 8192; // 8KB
-    private static final long MAX_BUFFER_SIZE = 67108864; // 64MB
+    private static final int MAX_BUFFER_SIZE = 67108864; // 64MB
 
     private static ConcurrentHashMap<String, String> clientStatus;
     private static ConcurrentHashMap<String, ArrayList<String>> unreadMessages;
+
+    private static ConcurrentHashMap<String, ObjectOutputStream> allClientOOS;
+    private static ArrayList<FileRequest> fileRequestArrayList;
+
     private static final String clientDirsPath = "./src/Server/ClientDirs/";
     private static final String clientDownloadsPath = "./src/Client/Downloads/";
     private final Socket socket;
@@ -34,10 +38,24 @@ public class ServerWorker extends Thread {
             // TODO file upload, request
     };
 
-    public ServerWorker(Socket socket, ConcurrentHashMap<String, String> clientStatusFromServer, ConcurrentHashMap<String, ArrayList<String>> unreadMessagesFromServer) {
+    public ServerWorker(Socket socket) {
         this.socket = socket;
-        clientStatus = clientStatusFromServer;
-        unreadMessages = unreadMessagesFromServer;
+    }
+
+    public static void setClientStatus(ConcurrentHashMap<String, String> clientStatus) {
+        ServerWorker.clientStatus = clientStatus;
+    }
+
+    public static void setUnreadMessages(ConcurrentHashMap<String, ArrayList<String>> unreadMessages) {
+        ServerWorker.unreadMessages = unreadMessages;
+    }
+
+    public static void setFileRequestArrayList(ArrayList<FileRequest> fileRequestArrayList) {
+        ServerWorker.fileRequestArrayList = fileRequestArrayList;
+    }
+
+    public static void setAllClientOOS(ConcurrentHashMap<String, ObjectOutputStream> allClientOOS) {
+        ServerWorker.allClientOOS = allClientOOS;
     }
 
     public void run() {
@@ -57,6 +75,7 @@ public class ServerWorker extends Thread {
                 }
                 clientConnStatus = "Online";
                 clientStatus.put(clientName, clientConnStatus);
+                allClientOOS.put(clientName, oos);
                 if (unreadMessages.get(clientName) == null) {
                     unreadMessages.put(clientName, new ArrayList<>());
                 }
@@ -75,6 +94,7 @@ public class ServerWorker extends Thread {
                         oos.writeUnshared("Bad Choice. Please choose correctly");
                     } else if (optionsMenuChoice == 0) {
                         clientStatus.put(clientName, "Offline");
+                        allClientOOS.remove(clientName);
                         this.logOut(ois, oos, this.socket);
                         break;
                     } else if (optionsMenuChoice == 1) {
@@ -88,7 +108,7 @@ public class ServerWorker extends Thread {
                         for (String msg : unreadMessages.get(clientName)) {
                             unreadMsg += msg + "\n\n";
                         }
-                        unreadMessages.put(clientName, new ArrayList<>());
+                        unreadMessages.get(clientName).clear();
                         oos.writeUnshared(unreadMsg);
                     } else if (optionsMenuChoice == 5) {
                         this.ownFileDownload(clientName, oos, ois);
@@ -96,7 +116,7 @@ public class ServerWorker extends Thread {
                         this.othersFileDownload(clientName, oos, ois);
                     }
                     else if(optionsMenuChoice == 7) {
-                        this.broadcastFileRequest();
+                        this.broadcastFileRequest(ois);
                     }
                 }
 
@@ -112,8 +132,29 @@ public class ServerWorker extends Thread {
         }
     }
 
-    private void broadcastFileRequest() {
+    private void broadcastFileRequest(ObjectInputStream ois) {
+        try {
+            Object o = ois.readUnshared();
+            if(o != null && o instanceof FileRequest) {
+                fileRequestArrayList.add((FileRequest) o);
+                String broadcastMsg = "\n-----New File Request-----\n" +
+                        "File Request ID : " + ((FileRequest) o).getRequestID() + "\n" +
+                        "File Requested by : " + ((FileRequest) o).getWhoRequested() + "\n" +
+                        "File Short Description : " + ((FileRequest) o).getFileDescription() + "\n";
 
+                // TODO
+                for(String otherClient : Collections.list(allClientOOS.keys())) {
+                    if(!otherClient.equalsIgnoreCase(((FileRequest) o).getWhoRequested())) {
+                        System.out.println(otherClient);
+                        ObjectOutputStream tempOOS = allClientOOS.get(otherClient);
+                        tempOOS.writeUnshared((int)777);
+                        tempOOS.writeUnshared(broadcastMsg);
+                    }
+                }
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 
     private void sendOptionsMenu(ObjectOutputStream oos) {
