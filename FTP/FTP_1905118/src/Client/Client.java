@@ -174,6 +174,16 @@ public class Client {
                                     long fileSize = clientUploadableFiles[whichFile].length();
                                     oos.writeUnshared(fileName);
                                     oos.writeUnshared(fileSize);
+                                    String serverMSG3 = (String) ois.readUnshared();
+                                    if(serverMSG3.equalsIgnoreCase("Buffer Overflow")) {
+                                        System.out.println(serverMSG3);
+                                        break L;
+                                    }
+                                    else {
+                                        String fileID = (String) ois.readUnshared();
+                                        int chunkSize = (int) ois.readUnshared();
+                                        System.out.println(fileID + " " + chunkSize);
+                                    }
                                 }
                                 else {
                                     System.out.println("Bad Choice");

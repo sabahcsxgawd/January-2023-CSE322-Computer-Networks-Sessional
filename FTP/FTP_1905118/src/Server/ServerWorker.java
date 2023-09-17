@@ -193,11 +193,22 @@ public class ServerWorker extends Thread {
                     return;
                 }
                 else {
-                    System.out.println(ois.readUnshared());
-                    System.out.println(ois.readUnshared());
-
+                    String clientUploadFileName = (String) ois.readUnshared();
+                    String clientUploadFileID = "";
+                    long clientUploadFileSize = (long) ois.readUnshared();
+                    int chunkSize = -1;
                     // need to check available buffer + filesize <= max buffer
-
+                    if(this.getAvailableBufferSize() + clientUploadFileSize <= MAX_BUFFER_SIZE) {
+                        oos.writeUnshared("Confirming");
+                        clientUploadFileID = this.generateFileID();
+                        chunkSize = this.generateRandomChunkSize();
+                        oos.writeUnshared(clientUploadFileID);
+                        oos.writeUnshared(chunkSize);
+                    }
+                    else {
+                        oos.writeUnshared("Buffer Overflow");
+                        return;
+                    }
                 }
             }
             else {
