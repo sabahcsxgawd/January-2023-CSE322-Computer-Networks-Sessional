@@ -9,6 +9,7 @@ import java.io.ObjectOutputStream;
 import java.net.Socket;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.stream.Collectors;
 
 public class ServerWorker extends Thread {
 
@@ -35,7 +36,8 @@ public class ServerWorker extends Thread {
             "Download own file",
             "Download others public file",
             "Make a file request",
-            // TODO file upload, request
+            "Upload a file"
+            // TODO file upload
     };
 
     public ServerWorker(Socket socket) {
@@ -118,6 +120,9 @@ public class ServerWorker extends Thread {
                     else if(optionsMenuChoice == 7) {
                         this.broadcastFileRequest(ois);
                     }
+                    else if(optionsMenuChoice == 8) {
+                        this.handleClientFileUpload(clientName, oos, ois);
+                    }
                 }
 
             } else {
@@ -132,6 +137,59 @@ public class ServerWorker extends Thread {
         }
     }
 
+    private void handleClientFileUpload(String clientName, ObjectOutputStream oos, ObjectInputStream ois) {
+        String uploadChoice = "Type 0 to upload private file\n" +
+                              "Type 1 to upload public file [not response to a request]\n" +
+                              "Type 2 to upload public file [response to a request]\n";
+        try {
+            oos.writeUnshared(uploadChoice);
+            int clientUploadChoice = Integer.parseInt((String) ois.readUnshared());
+            if(0 <= clientUploadChoice && clientUploadChoice < 3) {
+                oos.writeUnshared(Integer.toString(clientUploadChoice));
+                String accessType = "";
+                if(clientUploadChoice == 0) {
+                    accessType = "/private/";
+                }
+                else if(clientUploadChoice == 1) {
+                    accessType = "/public/";
+                }
+                else if(clientUploadChoice == 2) {
+                    accessType = "/public/";
+                    String reqstList = "";
+                    List<FileRequest> fileRequestArrayList1 =
+                            fileRequestArrayList.stream().
+                                    filter(fr -> !(fr.getWhoRequested().equalsIgnoreCase(clientName))).
+                                    collect(Collectors.toList());
+                    if(fileRequestArrayList1.isEmpty()) {
+                        reqstList = "No requests to fulfill";
+                        oos.writeUnshared(reqstList);
+                    }
+                    else {
+                        for(int i = 0; i < fileRequestArrayList1.size(); i++) {
+                            reqstList += "Type " + i + " to fulfill\n" +
+                                    "Request ID : " + fileRequestArrayList1.get(i).getRequestID() + '\n' +
+                                    "Requested File Description : " + fileRequestArrayList1.get(i).getFileDescription() + '\n';
+                        }
+                        oos.writeUnshared(reqstList);
+                        int reqstListChoice = Integer.parseInt((String) ois.readUnshared());
+                        if(0 <= reqstListChoice && reqstListChoice < fileRequestArrayList1.size()) {
+                            oos.writeUnshared(Integer.toString(reqstListChoice));
+                            // actual uploading phase
+
+                        }
+                        else {
+                            oos.writeUnshared("Bad Choice");
+                        }
+                    }
+                }
+            }
+            else {
+                oos.writeUnshared("Bad Choice");
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
     private void broadcastFileRequest(ObjectInputStream ois) {
         try {
             Object o = ois.readUnshared();
@@ -301,6 +359,9 @@ public class ServerWorker extends Thread {
                     oos.writeUnshared("Bad Choice");
                 }
             }
+            else {
+                oos.writeUnshared("");
+            }
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -333,6 +394,11 @@ public class ServerWorker extends Thread {
         }
 
         try {
+            if(downloadChoice.equalsIgnoreCase("")) {
+                downloadChoice = "Other Clients have no Public Files";
+                oos.writeUnshared(downloadChoice);
+                return;
+            }
             oos.writeUnshared(downloadChoice);
             String fileChoice = (String) ois.readUnshared();
             fileChoice = fileChoice.trim();
