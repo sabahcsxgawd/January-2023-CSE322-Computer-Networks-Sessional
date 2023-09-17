@@ -205,11 +205,9 @@ public class ServerWorker extends Thread {
                         oos.writeUnshared(chunkSize);
                         byte[] buffer = new byte[chunkSize];
                         int receivedBytes = 0;
-                        FileOutputStream fos = new FileOutputStream(clientDirsPath + clientName + accessType + clientUploadFileName);
                         while (true) {
                             String uploadStatMSG = (String) ois.readUnshared();
                             if(uploadStatMSG.equalsIgnoreCase("UPLOAD_TIMEOUT")) {
-                                new File(clientDirsPath + clientName + accessType + clientUploadFileName).delete();
                                 chunkConcurrentHashMap.remove(clientUploadFileID);
                                 break;
                             }
@@ -219,18 +217,17 @@ public class ServerWorker extends Thread {
                             chunkConcurrentHashMap.get(clientUploadFileID).add(new Chunk(buffer, receivedBytes));
                             // TODO need to send ACK
                             // TODO test timeout
-                            fos.write(buffer, 0, receivedBytes);
                             oos.writeUnshared("UPLOAD_ACK");
                             if(uploadStatMSG.equalsIgnoreCase("LAST CHUNK")) {
                                 // check if file size matches or not
                                 if(matchReceivedFileSize(clientUploadFileID, clientUploadFileSize)) {
                                     oos.writeUnshared("UPLOAD_SUCCESS");
                                     // TODO build file and send message to who reqstd
-//                                    FileOutputStream fos = new FileOutputStream(clientDirsPath + clientName + accessType + clientUploadFileName);
-//                                    for(Chunk chunk : chunkConcurrentHashMap.get(clientUploadFileID)) {
-//                                        fos.write(chunk.getData(), 0, chunk.getLen());
-//                                    }
-//                                    fos.close();
+                                    FileOutputStream fos = new FileOutputStream(clientDirsPath + clientName + accessType + clientUploadFileName);
+                                    for(Chunk chunk : chunkConcurrentHashMap.get(clientUploadFileID)) {
+                                        fos.write(chunk.getData(), 0, chunk.getLen());
+                                    }
+                                    fos.close();
                                     if(reqstListChoice != -1) {
                                         String whoRequested = fileRequestArrayList1.get(reqstListChoice).getWhoRequested();
                                         unreadMessages.get(whoRequested).add(clientName + " has uploaded your requested file");
@@ -244,7 +241,6 @@ public class ServerWorker extends Thread {
                                 break;
                             }
                         }
-                        fos.close();
                     }
                     else {
                         oos.writeUnshared("Buffer Overflow");
@@ -544,7 +540,7 @@ class Chunk {
     private int len;
 
     public Chunk(byte[] data, int len) {
-        this.data = data;
+        this.data = data.clone();
         this.len = len;
     }
 
