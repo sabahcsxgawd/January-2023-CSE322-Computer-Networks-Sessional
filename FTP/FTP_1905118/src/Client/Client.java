@@ -181,13 +181,14 @@ public class Client {
                                         int sentBytes = 0;
                                         byte[] buffer = new byte[chunkSize];
                                         FileInputStream fis = new FileInputStream(clientUploadableFiles[whichFile]);
-                                        while ((sentBytes = fis.read(buffer)) != -1) {
+                                        while ((sentBytes = fis.read(buffer, 0, chunkSize)) != -1) {
                                             fileSize -= sentBytes;
                                             if (fileSize <= 0) {
                                                 uploadStatMsg = "LAST CHUNK";
                                             }
                                             // send data and status
                                             oos.writeUnshared(uploadStatMsg);
+                                            oos.writeUnshared(sentBytes);
                                             oos.write(buffer, 0, sentBytes);
                                             oos.flush();
 
