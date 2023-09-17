@@ -20,6 +20,8 @@ public class ServerWorker extends Thread {
     private static ConcurrentHashMap<String, String> clientStatus;
     private static ConcurrentHashMap<String, ArrayList<String>> unreadMessages;
 
+    private static ConcurrentHashMap<String, ArrayList<Chunk>> chunkConcurrentHashMap;
+
     private static ConcurrentHashMap<String, ObjectOutputStream> allClientOOS;
     private static ArrayList<FileRequest> fileRequestArrayList;
 
@@ -37,7 +39,6 @@ public class ServerWorker extends Thread {
             "Download others public file",
             "Make a file request",
             "Upload a file"
-            // TODO file upload
     };
 
     public ServerWorker(Socket socket) {
@@ -58,6 +59,10 @@ public class ServerWorker extends Thread {
 
     public static void setAllClientOOS(ConcurrentHashMap<String, ObjectOutputStream> allClientOOS) {
         ServerWorker.allClientOOS = allClientOOS;
+    }
+
+    public static void setChunkConcurrentHashMap(ConcurrentHashMap<String, ArrayList<Chunk>> chunkConcurrentHashMap) {
+        ServerWorker.chunkConcurrentHashMap = chunkConcurrentHashMap;
     }
 
     public void run() {
@@ -382,16 +387,6 @@ public class ServerWorker extends Thread {
     }
 
     private void othersFileDownload(String clientName, ObjectOutputStream oos, ObjectInputStream ois) {
-        class Pair {
-            String ownerName;
-            String fileName;
-
-            Pair(String ownerName, String fileName) {
-                this.ownerName = ownerName;
-                this.fileName = fileName;
-            }
-        }
-
         ArrayList<Pair> pairArrayList = new ArrayList<>();
         String downloadChoice = "";
         int index = 0;
@@ -417,10 +412,10 @@ public class ServerWorker extends Thread {
             fileChoice = fileChoice.trim();
             int iFileChoice = Integer.parseInt(fileChoice);
             if (0 <= iFileChoice && iFileChoice < index) {
-                oos.writeUnshared(pairArrayList.get(iFileChoice).fileName);
+                oos.writeUnshared(pairArrayList.get(iFileChoice).getFileName());
 
                 // actual file sending gets started
-                FileInputStream fis = new FileInputStream(clientDirsPath + pairArrayList.get(iFileChoice).ownerName + "/public/" + pairArrayList.get(iFileChoice).fileName);
+                FileInputStream fis = new FileInputStream(clientDirsPath + pairArrayList.get(iFileChoice).getOwnerName() + "/public/" + pairArrayList.get(iFileChoice).getFileName());
                 int sentBytes = 0;
                 byte[] buffer = new byte[MAX_CHUNK_SIZE];
                 while ((sentBytes = fis.read(buffer)) != -1) {
@@ -451,7 +446,11 @@ public class ServerWorker extends Thread {
 
     private long getAvailableBufferSize() {
         long availableBufferSize = 0;
-        // TODO
+        for(String fileID : Collections.list(chunkConcurrentHashMap.keys())) {
+            for(Chunk chunk : chunkConcurrentHashMap.get(fileID)) {
+                availableBufferSize += chunk.getLen();
+            }
+        }
         return availableBufferSize;
     }
     private int generateRandomChunkSize() {
@@ -463,6 +462,24 @@ public class ServerWorker extends Thread {
     }
 }
 
+class Pair {
+    private String ownerName;
+
+    public String getOwnerName() {
+        return ownerName;
+    }
+
+    public String getFileName() {
+        return fileName;
+    }
+
+    private String fileName;
+
+    Pair(String ownerName, String fileName) {
+        this.ownerName = ownerName;
+        this.fileName = fileName;
+    }
+}
 class Chunk {
     private byte[] data;
     private int len;

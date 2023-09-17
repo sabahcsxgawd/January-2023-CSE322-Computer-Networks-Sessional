@@ -24,6 +24,7 @@ public class Server {
 
         // all connected clients socket
         ConcurrentHashMap<String, ObjectOutputStream> allClientOOS = new ConcurrentHashMap<>();
+        ConcurrentHashMap<String, ArrayList<Chunk>> chunkConcurrentHashMap = new ConcurrentHashMap<>();
 
         String clientDirsPath = "./src/Server/ClientDirs/";
         File clientDirFile = new File(clientDirsPath);
@@ -48,6 +49,7 @@ public class Server {
                 ServerWorker.setUnreadMessages(unreadMessages);
                 ServerWorker.setFileRequestArrayList(fileRequestArrayList);
                 ServerWorker.setAllClientOOS(allClientOOS);
+                ServerWorker.setChunkConcurrentHashMap(chunkConcurrentHashMap);
                 serverWorker.start();
 
             } catch (Exception e) {
