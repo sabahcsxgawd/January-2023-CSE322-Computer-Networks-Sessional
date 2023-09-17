@@ -207,24 +207,21 @@ public class ServerWorker extends Thread {
                         int receivedBytes = 0;
                         while (true) {
                             String uploadStatMSG = (String) ois.readUnshared();
-                            System.out.println(uploadStatMSG);
                             if(uploadStatMSG.equalsIgnoreCase("UPLOAD_TIMEOUT")) {
                                 chunkConcurrentHashMap.remove(clientUploadFileID);
                                 break;
                             }
                             receivedBytes = ois.read(buffer);
-                            System.out.println(receivedBytes);
                             chunkConcurrentHashMap.get(clientUploadFileID).add(new Chunk(buffer, receivedBytes));
                             // TODO need to send ACK
                             // TODO test timeout
                             oos.writeUnshared("UPLOAD_ACK");
-                            if(uploadStatMSG.equalsIgnoreCase("LAST_CHUNK")) {
+                            if(uploadStatMSG.equalsIgnoreCase("LAST CHUNK")) {
                                 // check if file size matches or not
                                 if(matchReceivedFileSize(clientUploadFileID, clientUploadFileSize)) {
                                     oos.writeUnshared("UPLOAD_SUCCESS");
-                                    System.out.println("SUCC");
                                     // TODO build file and send message to who reqstd
-                                    FileOutputStream fos = new FileOutputStream(clientDirsPath + clientName + accessType);
+                                    FileOutputStream fos = new FileOutputStream(clientDirsPath + clientName + accessType + clientUploadFileName);
                                     for(Chunk chunk : chunkConcurrentHashMap.get(clientUploadFileID)) {
                                         fos.write(chunk.getData(), 0, chunk.getLen());
                                     }
@@ -238,7 +235,6 @@ public class ServerWorker extends Thread {
                                     oos.writeUnshared("UPLOAD_ERROR");
                                 }
                                 chunkConcurrentHashMap.get(clientUploadFileID).clear();
-                                System.out.println("GOGOOGOGOGOGO");
                                 break;
                             }
                         }

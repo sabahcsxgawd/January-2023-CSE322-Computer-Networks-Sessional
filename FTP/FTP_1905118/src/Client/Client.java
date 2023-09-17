@@ -186,16 +186,14 @@ public class Client {
                                             if (fileSize <= 0) {
                                                 uploadStatMsg = "LAST CHUNK";
                                             }
-                                            System.out.println(uploadStatMsg);
                                             // send data and status
                                             oos.writeUnshared(uploadStatMsg);
                                             oos.write(buffer, 0, sentBytes);
                                             oos.flush();
 
-//                                            socket.setSoTimeout(30000);
+                                            socket.setSoTimeout(30000);
                                             try {
                                                 String serverMSG4 = (String) ois.readUnshared();
-                                                System.out.println(serverMSG4);
                                                 if (serverMSG4.equalsIgnoreCase("UPLOAD_ACK")) {
                                                     if (uploadStatMsg.equalsIgnoreCase("LAST CHUNK")) {
                                                         System.out.println((String) ois.readUnshared());
