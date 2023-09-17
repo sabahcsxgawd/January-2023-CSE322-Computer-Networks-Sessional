@@ -2,11 +2,9 @@ package Client;
 
 import FileRequest.FileRequest;
 
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
+import java.io.*;
 import java.net.Socket;
+import java.net.SocketTimeoutException;
 import java.util.Scanner;
 
 public class Client {
@@ -44,10 +42,10 @@ public class Client {
                             System.out.println(ois.readUnshared());
                         } else if (response == 0) {
                             System.out.println(ois.readUnshared());
-                            socket.close();
                             ois.close();
                             oos.close();
-                            break;
+                            socket.close();
+                            return;
                         } else if (response == 1) {
                             System.out.println(ois.readUnshared());
                         } else if (response == 2) {
@@ -66,7 +64,7 @@ public class Client {
                                 break L;
                             } else {
                                 String serverMSG2 = (String) ois.readUnshared();
-                                if(serverMSG2.isEmpty()) {
+                                if (serverMSG2.isEmpty()) {
                                     break L;
                                 }
                                 System.out.println(serverMSG2);
@@ -140,8 +138,7 @@ public class Client {
                                     if (serverResponse2.equalsIgnoreCase("Bad Choice")) {
                                         System.out.println(serverResponse2);
                                         break L;
-                                    }
-                                    else {
+                                    } else {
                                         System.out.println("\n");
                                     }
                                 }
@@ -152,15 +149,14 @@ public class Client {
 
                             // need to pick file
                             File[] clientUploadableFiles = new File("./src/Client/Downloads/" + userName).listFiles();
-                            if(clientUploadableFiles == null || clientUploadableFiles.length == 0) {
+                            if (clientUploadableFiles == null || clientUploadableFiles.length == 0) {
                                 System.out.println("No uploadable files");
                                 oos.writeUnshared("No uploadable files");
                                 break L;
-                            }
-                            else {
+                            } else {
                                 oos.writeUnshared("Something to upload");
                                 int whichFile = 0;
-                                for(File child : clientUploadableFiles) {
+                                for (File child : clientUploadableFiles) {
 //                                    String[] fileNameArr = child.getPath().split("\\\\|/");
 //                                    String fileName = fileNameArr[fileNameArr.length - 1];
                                     System.out.println("Type " + whichFile++ + " to upload " + child.getName());
@@ -168,24 +164,53 @@ public class Client {
                                 whichFile = -1;
                                 String s_whichFile = scanner.nextLine();
                                 whichFile = Integer.parseInt(s_whichFile);
-                                if(0 <= whichFile && whichFile < clientUploadableFiles.length) {
+                                if (0 <= whichFile && whichFile < clientUploadableFiles.length) {
                                     // send file name and size to server
                                     String fileName = clientUploadableFiles[whichFile].getName();
                                     long fileSize = clientUploadableFiles[whichFile].length();
                                     oos.writeUnshared(fileName);
                                     oos.writeUnshared(fileSize);
                                     String serverMSG3 = (String) ois.readUnshared();
-                                    if(serverMSG3.equalsIgnoreCase("Buffer Overflow")) {
+                                    if (serverMSG3.equalsIgnoreCase("Buffer Overflow")) {
                                         System.out.println(serverMSG3);
                                         break L;
-                                    }
-                                    else {
+                                    } else {
                                         String fileID = (String) ois.readUnshared();
                                         int chunkSize = (int) ois.readUnshared();
-                                        System.out.println(fileID + " " + chunkSize);
+                                        String uploadStatMsg = "NOT LAST CHUNK";
+                                        int sentBytes = 0;
+                                        byte[] buffer = new byte[chunkSize];
+                                        FileInputStream fis = new FileInputStream(clientUploadableFiles[whichFile]);
+                                        while ((sentBytes = fis.read(buffer)) != -1) {
+                                            fileSize -= sentBytes;
+                                            if (fileSize <= 0) {
+                                                uploadStatMsg = "LAST CHUNK";
+                                            }
+                                            System.out.println(uploadStatMsg);
+                                            // send data and status
+                                            oos.writeUnshared(uploadStatMsg);
+                                            oos.write(buffer, 0, sentBytes);
+                                            oos.flush();
+
+//                                            socket.setSoTimeout(30000);
+                                            try {
+                                                String serverMSG4 = (String) ois.readUnshared();
+                                                System.out.println(serverMSG4);
+                                                if (serverMSG4.equalsIgnoreCase("UPLOAD_ACK")) {
+                                                    if (uploadStatMsg.equalsIgnoreCase("LAST CHUNK")) {
+                                                        System.out.println((String) ois.readUnshared());
+                                                        break;
+                                                    }
+                                                }
+                                            } catch (SocketTimeoutException e) {
+                                                uploadStatMsg = "UPLOAD_TIMEOUT";
+                                                oos.writeUnshared(uploadStatMsg);
+                                                break;
+                                            }
+                                        }
+                                        fis.close();
                                     }
-                                }
-                                else {
+                                } else {
                                     System.out.println("Bad Choice");
                                     break L;
                                 }
@@ -204,6 +229,7 @@ public class Client {
 
         } catch (Exception e) {
             e.printStackTrace();
+            while (true);
         }
     }
 }
