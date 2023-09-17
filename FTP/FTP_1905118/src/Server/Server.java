@@ -29,8 +29,9 @@ public class Server {
         File clientDirFile = new File(clientDirsPath);
 
         for (File child : Objects.requireNonNull(clientDirFile.listFiles())) {
-            String[] clientNamePath = child.getPath().split("\\\\|/"); // to remove separators from file path
-            String clientName = clientNamePath[clientNamePath.length - 1]; // getting the actual file name
+//            String[] clientNamePath = child.getPath().split("\\\\|/"); // to remove separators from file path
+//            String clientName = clientNamePath[clientNamePath.length - 1]; // getting the actual user name
+            String clientName = child.getName(); // getting the actual user name
             System.out.println(clientName); // already added clients names
             clientStatus.put(clientName, "Offline");
             unreadMessages.put(clientName, new ArrayList<>());

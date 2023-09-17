@@ -147,6 +147,7 @@ public class ServerWorker extends Thread {
             if(0 <= clientUploadChoice && clientUploadChoice < 3) {
                 oos.writeUnshared(Integer.toString(clientUploadChoice));
                 String accessType = "";
+                int reqstListChoice = -1;
                 if(clientUploadChoice == 0) {
                     accessType = "/private/";
                 }
@@ -163,6 +164,7 @@ public class ServerWorker extends Thread {
                     if(fileRequestArrayList1.isEmpty()) {
                         reqstList = "No requests to fulfill";
                         oos.writeUnshared(reqstList);
+                        return;
                     }
                     else {
                         for(int i = 0; i < fileRequestArrayList1.size(); i++) {
@@ -171,20 +173,31 @@ public class ServerWorker extends Thread {
                                     "Requested File Description : " + fileRequestArrayList1.get(i).getFileDescription() + '\n';
                         }
                         oos.writeUnshared(reqstList);
-                        int reqstListChoice = Integer.parseInt((String) ois.readUnshared());
+                        reqstListChoice = Integer.parseInt((String) ois.readUnshared());
                         if(0 <= reqstListChoice && reqstListChoice < fileRequestArrayList1.size()) {
                             oos.writeUnshared(Integer.toString(reqstListChoice));
-                            // actual uploading phase
-
                         }
                         else {
                             oos.writeUnshared("Bad Choice");
+                            return;
                         }
                     }
+                }
+
+                if(((String) ois.readUnshared()).equalsIgnoreCase("No uploadable files")) {
+                    return;
+                }
+                else {
+                    System.out.println(ois.readUnshared());
+                    System.out.println(ois.readUnshared());
+
+                    // need to check available buffer + filesize <= max buffer
+
                 }
             }
             else {
                 oos.writeUnshared("Bad Choice");
+                return;
             }
         } catch (Exception e) {
             e.printStackTrace();
@@ -266,9 +279,9 @@ public class ServerWorker extends Thread {
         File[] fileArr = new File(fileDir).listFiles();
 
         for (File child : Objects.requireNonNull(fileArr)) {
-            String[] filePathArr = child.getPath().split("\\\\|/");
-            String file = filePathArr[filePathArr.length - 1];
-            files.add(file);
+//            String[] filePathArr = child.getPath().split("\\\\|/");
+//            String file = filePathArr[filePathArr.length - 1];
+            files.add(child.getName());
         }
         return files;
     }
@@ -434,5 +447,36 @@ public class ServerWorker extends Thread {
         } catch (Exception e) {
             e.printStackTrace();
         }
+    }
+
+    private long getAvailableBufferSize() {
+        long availableBufferSize = 0;
+        // TODO
+        return availableBufferSize;
+    }
+    private int generateRandomChunkSize() {
+        return (new Random()).nextInt(MAX_CHUNK_SIZE - MIN_CHUNK_SIZE + 1) + MIN_CHUNK_SIZE;
+    }
+
+    private String generateFileID() {
+        return UUID.randomUUID().toString();
+    }
+}
+
+class Chunk {
+    private byte[] data;
+    private int len;
+
+    public Chunk(byte[] data, int len) {
+        this.data = data;
+        this.len = len;
+    }
+
+    public byte[] getData() {
+        return data;
+    }
+
+    public int getLen() {
+        return len;
     }
 }

@@ -2,6 +2,7 @@ package Client;
 
 import FileRequest.FileRequest;
 
+import java.io.File;
 import java.io.FileOutputStream;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
@@ -123,13 +124,14 @@ public class Client {
                             oos.writeUnshared(s_uploadChoice);
                             String serverResponse1 = (String) ois.readUnshared();
                             if (serverResponse1.equalsIgnoreCase("0")) {
-                                // TODO
+                                System.out.println("\n");
                             } else if (serverResponse1.equalsIgnoreCase("1")) {
-                                // TODO
+                                System.out.println("\n");
                             } else if (serverResponse1.equalsIgnoreCase("2")) {
                                 String reqstList = (String) ois.readUnshared();
                                 if (reqstList.equalsIgnoreCase("No requests to fulfill")) {
                                     System.out.println(reqstList);
+                                    break L;
                                 } else {
                                     System.out.println(reqstList);
                                     String reqstListChoice = scanner.nextLine();
@@ -137,16 +139,49 @@ public class Client {
                                     String serverResponse2 = (String) ois.readUnshared();
                                     if (serverResponse2.equalsIgnoreCase("Bad Choice")) {
                                         System.out.println(serverResponse2);
-                                    } else {
-                                        // actual uploading starts
-                                        System.out.println("\n------------\n");
-
+                                        break L;
+                                    }
+                                    else {
+                                        System.out.println("\n");
                                     }
                                 }
                             } else {
                                 System.out.println(serverResponse1);
-                                continue;
+                                break L;
                             }
+
+                            // need to pick file
+                            File[] clientUploadableFiles = new File("./src/Client/Downloads/" + userName).listFiles();
+                            if(clientUploadableFiles == null || clientUploadableFiles.length == 0) {
+                                System.out.println("No uploadable files");
+                                oos.writeUnshared("No uploadable files");
+                                break L;
+                            }
+                            else {
+                                oos.writeUnshared("Something to upload");
+                                int whichFile = 0;
+                                for(File child : clientUploadableFiles) {
+//                                    String[] fileNameArr = child.getPath().split("\\\\|/");
+//                                    String fileName = fileNameArr[fileNameArr.length - 1];
+                                    System.out.println("Type " + whichFile++ + " to upload " + child.getName());
+                                }
+                                whichFile = -1;
+                                String s_whichFile = scanner.nextLine();
+                                whichFile = Integer.parseInt(s_whichFile);
+                                if(0 <= whichFile && whichFile < clientUploadableFiles.length) {
+                                    // send file name and size to server
+                                    String fileName = clientUploadableFiles[whichFile].getName();
+                                    long fileSize = clientUploadableFiles[whichFile].length();
+                                    oos.writeUnshared(fileName);
+                                    oos.writeUnshared(fileSize);
+                                }
+                                else {
+                                    System.out.println("Bad Choice");
+                                    break L;
+                                }
+                            }
+
+
                         } else if (response == 777) {
                             System.out.println((String) ois.readUnshared());
                             response = (int) ois.readUnshared();
