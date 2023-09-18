@@ -32,6 +32,9 @@ public class Client {
                 int response;
                 while (true) {
                     String serverMSG = (String) ois.readUnshared();
+                    if(serverMSG.equalsIgnoreCase("UPLOAD_ACK")) {
+                        continue;
+                    }
                     System.out.println(serverMSG);
                     String choice = scanner.nextLine();
                     oos.writeUnshared(choice);
@@ -40,21 +43,27 @@ public class Client {
                     for (int i = 0; i <= 1; i++) {
                         if (response == -1) {
                             System.out.println(ois.readUnshared());
-                        } else if (response == 0) {
+                        }
+                        else if (response == 0) {
                             System.out.println(ois.readUnshared());
                             ois.close();
                             oos.close();
                             socket.close();
                             return;
-                        } else if (response == 1) {
+                        }
+                        else if (response == 1) {
                             System.out.println(ois.readUnshared());
-                        } else if (response == 2) {
+                        }
+                        else if (response == 2) {
                             System.out.println(ois.readUnshared());
-                        } else if (response == 3) {
+                        }
+                        else if (response == 3) {
                             System.out.println(ois.readUnshared());
-                        } else if (response == 4) {
+                        }
+                        else if (response == 4) {
                             System.out.println(ois.readUnshared());
-                        } else if (response == 5) {
+                        }
+                        else if (response == 5) {
                             System.out.println(ois.readUnshared());
                             String myAccessTypeChoice = scanner.nextLine();
                             oos.writeUnshared(myAccessTypeChoice);
@@ -88,7 +97,8 @@ public class Client {
                                     System.out.println((String) ois.readUnshared());
                                 }
                             }
-                        } else if (response == 6) {
+                        }
+                        else if (response == 6) {
                             String serverMSG1 = (String) ois.readUnshared();
                             System.out.println(serverMSG1);
                             if (!serverMSG1.equalsIgnoreCase("Other Clients have no Public Files")) {
@@ -112,11 +122,13 @@ public class Client {
                                     System.out.println((String) ois.readUnshared());
                                 }
                             }
-                        } else if (response == 7) {
+                        }
+                        else if (response == 7) {
                             System.out.println("Please provide a short description for the requested file :");
                             String requestedFileDescription = scanner.nextLine();
                             oos.writeUnshared(new FileRequest(requestedFileDescription, userName));
-                        } else if (response == 8) {
+                        }
+                        else if (response == 8) {
                             System.out.println((String) ois.readUnshared());
                             String s_uploadChoice = scanner.nextLine();
                             oos.writeUnshared(s_uploadChoice);
@@ -177,14 +189,14 @@ public class Client {
                                     } else {
                                         String fileID = (String) ois.readUnshared();
                                         int chunkSize = (int) ois.readUnshared();
-                                        String uploadStatMsg = "NOT LAST CHUNK";
+                                        String uploadStatMsg = "NOT_LAST_CHUNK";
                                         int sentBytes = 0;
                                         byte[] buffer = new byte[chunkSize];
                                         FileInputStream fis = new FileInputStream(clientUploadableFiles[whichFile]);
                                         while ((sentBytes = fis.read(buffer, 0, chunkSize)) != -1) {
                                             fileSize -= sentBytes;
                                             if (fileSize <= 0) {
-                                                uploadStatMsg = "LAST CHUNK";
+                                                uploadStatMsg = "LAST_CHUNK";
                                             }
                                             // send data and status
                                             oos.writeUnshared(uploadStatMsg);
@@ -204,6 +216,7 @@ public class Client {
                                             } catch (SocketTimeoutException e) {
                                                 uploadStatMsg = "UPLOAD_TIMEOUT";
                                                 oos.writeUnshared(uploadStatMsg);
+                                                System.out.println("Upload failed due to timeout");
                                                 break;
                                             }
                                         }
@@ -214,9 +227,8 @@ public class Client {
                                     break L;
                                 }
                             }
-
-
-                        } else if (response == 777) {
+                        }
+                        else if (response == 777) {
                             System.out.println((String) ois.readUnshared());
                             response = (int) ois.readUnshared();
                             continue L;
@@ -228,7 +240,7 @@ public class Client {
 
         } catch (Exception e) {
             e.printStackTrace();
-            while (true);
+
         }
     }
 }

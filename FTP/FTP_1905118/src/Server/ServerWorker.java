@@ -2,6 +2,7 @@ package Server;
 
 import FileRequest.FileRequest;
 
+import javax.swing.plaf.metal.MetalBorders;
 import java.io.*;
 import java.net.Socket;
 import java.util.*;
@@ -216,9 +217,10 @@ public class ServerWorker extends Thread {
                             System.out.println(receivedBytes);
                             chunkConcurrentHashMap.get(clientUploadFileID).add(new Chunk(buffer, receivedBytes));
                             // TODO need to send ACK
-                            // TODO test timeout
+                            // TODO test timeout ; comment out the line to test for timeout
+                            Thread.sleep(35000);
                             oos.writeUnshared("UPLOAD_ACK");
-                            if(uploadStatMSG.equalsIgnoreCase("LAST CHUNK")) {
+                            if(uploadStatMSG.equalsIgnoreCase("LAST_CHUNK")) {
                                 // check if file size matches or not
                                 if(matchReceivedFileSize(clientUploadFileID, clientUploadFileSize)) {
                                     oos.writeUnshared("UPLOAD_SUCCESS");
