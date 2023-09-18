@@ -183,7 +183,7 @@ public class Client {
                                     oos.writeUnshared(fileName);
                                     oos.writeUnshared(fileSize);
                                     String serverMSG3 = (String) ois.readUnshared();
-                                    if (serverMSG3.equalsIgnoreCase("Buffer Overflow")) {
+                                    if (serverMSG3.equalsIgnoreCase("Buffer_Overflow")) {
                                         System.out.println(serverMSG3);
                                         break L;
                                     } else {
@@ -208,7 +208,7 @@ public class Client {
                                             try {
                                                 String serverMSG4 = (String) ois.readUnshared();
                                                 if (serverMSG4.equalsIgnoreCase("UPLOAD_ACK")) {
-                                                    if (uploadStatMsg.equalsIgnoreCase("LAST CHUNK")) {
+                                                    if (uploadStatMsg.equalsIgnoreCase("LAST_CHUNK")) {
                                                         System.out.println((String) ois.readUnshared());
                                                         break;
                                                     }

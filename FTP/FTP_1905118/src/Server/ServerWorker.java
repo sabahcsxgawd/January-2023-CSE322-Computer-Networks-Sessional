@@ -214,11 +214,10 @@ public class ServerWorker extends Thread {
                             }
                             receivedBytes = (int) ois.readUnshared();
                             ois.readFully(buffer, 0, receivedBytes);
-                            System.out.println(receivedBytes);
                             chunkConcurrentHashMap.get(clientUploadFileID).add(new Chunk(buffer, receivedBytes));
                             // TODO need to send ACK
                             // TODO test timeout ; comment out the line to test for timeout
-                            Thread.sleep(35000);
+//                            Thread.sleep(35000);
                             oos.writeUnshared("UPLOAD_ACK");
                             if(uploadStatMSG.equalsIgnoreCase("LAST_CHUNK")) {
                                 // check if file size matches or not
@@ -240,12 +239,12 @@ public class ServerWorker extends Thread {
                                     new File(clientDirsPath + clientName + accessType + clientUploadFileName).delete();
                                 }
                                 chunkConcurrentHashMap.get(clientUploadFileID).clear();
-                                break;
+                                return;
                             }
                         }
                     }
                     else {
-                        oos.writeUnshared("Buffer Overflow");
+                        oos.writeUnshared("Buffer_Overflow");
                         return;
                     }
                 }
