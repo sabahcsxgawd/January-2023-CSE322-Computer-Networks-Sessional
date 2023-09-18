@@ -146,7 +146,7 @@ public class ServerWorker extends Thread {
                               "Type 2 to upload public file [response to a request]\n";
         try {
             oos.writeUnshared(uploadChoice);
-            int clientUploadChoice = Integer.parseInt((String) ois.readUnshared());
+            int clientUploadChoice = Integer.parseInt(((String) ois.readUnshared()).trim());
             if(0 <= clientUploadChoice && clientUploadChoice < 3) {
                 oos.writeUnshared(Integer.toString(clientUploadChoice));
                 String accessType = "";
@@ -177,7 +177,7 @@ public class ServerWorker extends Thread {
                                     "Requested File Description : " + fileRequestArrayList1.get(i).getFileDescription() + '\n';
                         }
                         oos.writeUnshared(reqstList);
-                        reqstListChoice = Integer.parseInt((String) ois.readUnshared());
+                        reqstListChoice = Integer.parseInt(((String) ois.readUnshared()).trim());
                         if(0 <= reqstListChoice && reqstListChoice < fileRequestArrayList1.size()) {
                             oos.writeUnshared(Integer.toString(reqstListChoice));
                         }
@@ -297,7 +297,7 @@ public class ServerWorker extends Thread {
     private int getOptionsMenuChoice(ObjectInputStream ois) {
         try {
             String choice = (String) ois.readUnshared();
-            int choice_i = Integer.parseInt(choice);
+            int choice_i = Integer.parseInt(choice.trim());
             if (0 <= choice_i && choice_i < optionsMenu.length) {
                 return choice_i;
             } else {
