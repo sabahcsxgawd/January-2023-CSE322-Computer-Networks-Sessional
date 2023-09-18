@@ -24,7 +24,6 @@ public class ServerWorker extends Thread {
     private static ArrayList<FileRequest> fileRequestArrayList;
 
     private static final String clientDirsPath = "./src/Server/ClientDirs/";
-    private static final String clientDownloadsPath = "./src/Client/Downloads/";
     private final Socket socket;
 
     private static final String[] optionsMenu = {
@@ -76,7 +75,6 @@ public class ServerWorker extends Thread {
                 if (clientConnStatus == null) {
                     new File(clientDirsPath + clientName + "/public/").mkdirs();
                     new File(clientDirsPath + clientName + "/private/").mkdirs();
-                    new File(clientDownloadsPath + clientName + '/').mkdirs();
                 }
                 clientConnStatus = "Online";
                 clientStatus.put(clientName, clientConnStatus);

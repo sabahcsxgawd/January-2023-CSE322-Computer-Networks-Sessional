@@ -30,6 +30,7 @@ public class Client {
                 oos.close();
             } else {
                 int response;
+                new File("./src/Client/Downloads/" + userName + '/').mkdirs();
                 while (true) {
                     String serverMSG = (String) ois.readUnshared();
                     if(serverMSG.equalsIgnoreCase("UPLOAD_ACK")) {
